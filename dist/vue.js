@@ -13,10 +13,12 @@
 
 // these helpers produces better vm code in JS engines due to their
 // explicitness and function inlining
+// 判断js未定义
 function isUndef (v) {
   return v === undefined || v === null
 }
 
+// 判断已定义
 function isDef (v) {
   return v !== undefined && v !== null
 }
@@ -32,6 +34,7 @@ function isFalse (v) {
 /**
  * Check if value is primitive
  */
+// 判断为原始对象
 function isPrimitive (value) {
   return (
     typeof value === 'string' ||
@@ -53,7 +56,7 @@ function isObject (obj) {
  * Get the raw type string of a value e.g. [object Object]
  */
 var _toString = Object.prototype.toString;
-
+// 切割引用类型得到后面的基本类型，例如：[object RegExp] 得到的就是 RegExp
 function toRawType (value) {
   return _toString.call(value).slice(8, -1)
 }
@@ -62,6 +65,7 @@ function toRawType (value) {
  * Strict object type check. Only returns true
  * for plain JavaScript objects.
  */
+// 判断纯粹的对象："纯粹的对象"，就是通过 { }、new Object()、Object.create(null) 创建的对象
 function isPlainObject (obj) {
   return _toString.call(obj) === '[object Object]'
 }
@@ -73,6 +77,7 @@ function isRegExp (v) {
 /**
  * Check if val is a valid array index.
  */
+// 检查val是否是一个有效的数组索引，其实就是验证是否是一个非无穷大的正整数
 function isValidArrayIndex (val) {
   var n = parseFloat(String(val));
   return n >= 0 && Math.floor(n) === n && isFinite(val)
@@ -102,6 +107,13 @@ function toNumber (val) {
  * Make a map and return a function for checking if a key
  * is in that map.
  */
+// makeMap 方法将字符串切割，放到map中，用于校验其中的某个字符串是否存在（区分大小写）于map中 e.g.
+/**
+ * e.g.:
+ * var isBuiltInTag = makeMap('slot,component', true);// 是否为内置标签
+    isBuiltInTag('slot'); //true
+    isBuiltInTag('slot1'); //undefined
+ */
 function makeMap (
   str,
   expectsLowerCase
@@ -129,6 +141,7 @@ var isReservedAttribute = makeMap('key,ref,slot,slot-scope,is');
 /**
  * Remove an item from an array
  */
+// 数组移除元素方法
 function remove (arr, item) {
   if (arr.length) {
     var index = arr.indexOf(item);
@@ -149,6 +162,8 @@ function hasOwn (obj, key) {
 /**
  * Create a cached version of a pure function.
  */
+// 高级函数 cached函数，输入参数为函数，返回值为函数。同时使用了闭包，
+// 其会将该传入的函数的运行结果缓存，创建一个cache对象用于缓存运行fn的运行结果。
 function cached (fn) {
   var cache = Object.create(null);
   return (function cachedFn (str) {
@@ -161,6 +176,7 @@ function cached (fn) {
  * Camelize a hyphen-delimited string.
  */
 var camelizeRE = /-(\w)/g;
+// 驼峰化一个连字符连接的字符串
 var camelize = cached(function (str) {
   return str.replace(camelizeRE, function (_, c) { return c ? c.toUpperCase() : ''; })
 });
@@ -168,6 +184,7 @@ var camelize = cached(function (str) {
 /**
  * Capitalize a string.
  */
+// 对一个字符串首字母大写
 var capitalize = cached(function (str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 });
@@ -176,6 +193,7 @@ var capitalize = cached(function (str) {
  * Hyphenate a camelCase string.
  */
 var hyphenateRE = /\B([A-Z])/g;
+// 用字符号连接一个驼峰的字符串
 var hyphenate = cached(function (str) {
   return str.replace(hyphenateRE, '-$1').toLowerCase()
 });
@@ -213,6 +231,7 @@ function toArray (list, start) {
 /**
  * Mix properties into target object.
  */
+// 将多个属性插入目标的对象
 function extend (to, _from) {
   for (var key in _from) {
     to[key] = _from[key];
@@ -223,6 +242,8 @@ function extend (to, _from) {
 /**
  * Merge an Array of Objects into a single Object.
  */
+// 将对象数组合并为单个对象。
+// e.g: toObject([{ anme: 'ss'}, {age: 10}]) => {name, age}
 function toObject (arr) {
   var res = {};
   for (var i = 0; i < arr.length; i++) {
@@ -253,6 +274,7 @@ var identity = function (_) { return _; };
 /**
  * Generate a static keys string from compiler modules.
  */
+// 从编译器模块生成包含静态键的字符串
 function genStaticKeys (modules) {
   return modules.reduce(function (keys, m) {
     return keys.concat(m.staticKeys || [])
@@ -263,6 +285,7 @@ function genStaticKeys (modules) {
  * Check if two values are loosely equal - that is,
  * if they are plain objects, do they have the same shape?
  */
+//※高级函数 对对象的浅相等进行判断
 function looseEqual (a, b) {
   if (a === b) { return true }
   var isObjectA = isObject(a);
