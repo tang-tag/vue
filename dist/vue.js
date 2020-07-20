@@ -339,14 +339,17 @@ function once (fn) {
   }
 }
 
+// 服务端渲染属性值
 var SSR_ATTR = 'data-server-rendered';
 
+// 全局函数
 var ASSET_TYPES = [
   'component',
   'directive',
   'filter'
 ];
 
+  // 第一期周期
 var LIFECYCLE_HOOKS = [
   'beforeCreate',
   'created',
@@ -367,11 +370,13 @@ var config = ({
   /**
    * Option merge strategies (used in core/util/options)
    */
+  // 自定义合并策略的选项
   optionMergeStrategies: Object.create(null),
 
   /**
    * Whether to suppress warnings.
    */
+  // 是否关闭警告，默认为false,如果设置true，那么将不会有各种报错
   silent: false,
 
   /**
@@ -392,27 +397,32 @@ var config = ({
   /**
    * Error handler for watcher errors
    */
+  // 指定组件的渲染和观察期间未捕获错误的处理函数。这个处理函数被调用时，可获取错误信息和 Vue 实例。
   errorHandler: null,
 
   /**
    * Warn handler for watcher warns
    */
+  // Vue 的运行时警告赋予一个自定义处理函数。注意这只会在开发者环境下生效，在生产环境下它会被忽略。
   warnHandler: null,
 
   /**
    * Ignore certain custom elements
    */
+  // 忽略某些自定义元素
   ignoredElements: [],
 
   /**
    * Custom user key aliases for v-on
    */
+  // 给v-on 自定义键位别名。
   keyCodes: Object.create(null),
 
   /**
    * Check if a tag is reserved so that it cannot be registered as a
    * component. This is platform-dependent and may be overwritten.
    */
+  // 保留标签，如有，则这些标签不能注册成为组件
   isReservedTag: no,
 
   /**
@@ -665,6 +675,7 @@ if (inBrowser) {
 
 // this needs to be lazy-evaled because vue may be required before
 // vue-server-renderer can set VUE_ENV
+// 这个需求需要延迟加载, 因为在 vue服务器渲染设置VUE_ENV环境之前, 需要先加载vue
 var _isServer;
 var isServerRendering = function () {
   if (_isServer === undefined) {
@@ -684,10 +695,14 @@ var isServerRendering = function () {
 var devtools = inBrowser && window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
 
 /* istanbul ignore next */
+//这里判断 函数是否是系统函数, 比如 Function Object ExpReg window document 等等, 这些函数应该使用c/c++实现的
+//这样可以区分 Symbol是系统函数, 还是用户自定义了一个Symbol, 下面这个函数可以看出来
 function isNative (Ctor) {
   return typeof Ctor === 'function' && /native code/.test(Ctor.toString())
 }
 
+//这里使用了ES6的Reflect方法, 使用这个对象的目的是, 为了保证访问的是系统的原型方法,
+// ownKeys 保证key的输出顺序, 先数组 后字符串
 var hasSymbol =
   typeof Symbol !== 'undefined' && isNative(Symbol) &&
   typeof Reflect !== 'undefined' && isNative(Reflect.ownKeys);
@@ -709,6 +724,18 @@ var nextTick = (function () {
     }
   }
 
+  /*
+  延迟一个任务, 异步执行;  在node.js中, next会在setTimeout之前执行, 也就是在当前执行栈之后, 事件队列之前执行
+　比如在同一个事件循环中, 反复设置一个vm的值, 最后只会执行 一次对应UI的更新.
+   JS 的 event loop 执行时会区分 task 和 microtask，引擎在每个 task 执行完毕，
+  　从队列中取下一个 task 来执行之前，会先执行完所有 microtask 队列中的事件。
+  　setTimeout 回调会被分配到一个新的 task 中执行，而 Promise 的 resolver、MutationObserver 的回调都会被安排到一个新的 microtask 中执行，
+  　会比 setTimeout 产生的 task 先执行
+  　用 microtask？根据 HTML Standard，在每个 task 运行完以后，UI 都会重渲染，
+  　那么在 microtask 中就完成数据更新，当前 task 结束就可以得到最新的 UI 了。
+  　反之如果新建一个 task 来做数据更新，那么渲染就会进行两次。所以优先不使用task
+
+  */
   // An asynchronous deferring mechanism.
   // In pre 2.4, we used to use microtasks (Promise/MutationObserver)
   // but microtasks actually has too high a priority and fires in between
